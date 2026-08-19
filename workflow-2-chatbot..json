@@ -1,0 +1,235 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "10682ad5-0fde-417d-a56a-b68432be699c",
+      "name": "When chat message received",
+      "webhookId": "0f4429b7-3b4d-46fc-8916-7975315461b4"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "9a858366-d8eb-459a-b681-06ba367ef790",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "qwen/qwen3.6-27b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        96,
+        208
+      ],
+      "id": "9c7dac76-a63c-426f-b244-2c744d99a37b",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "iEnTXGmYuT8UQXJE",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        240,
+        208
+      ],
+      "id": "05e5ac75-bfe1-44d0-b89f-abb83b308c81",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "description": "Buscador de información sobre el CV y antecedentes de Santiago Tapia Bazán."
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+      "typeVersion": 1.1,
+      "position": [
+        384,
+        208
+      ],
+      "id": "316e433b-e32c-4b97-a839-b82446ebcdee",
+      "name": "Answer questions with a vector store"
+    },
+    {
+      "parameters": {
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "documentos-tecnicos",
+          "mode": "list",
+          "cachedResultName": "documentos-tecnicos"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        192,
+        384
+      ],
+      "id": "9ce26ab7-1755-47d5-9090-5df6faaeaad6",
+      "name": "Pinecone Vector Store",
+      "credentials": {
+        "pineconeApi": {
+          "id": "amsETLmDmJvBZRc7",
+          "name": "Pinecone account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "BAAI/bge-large-en-v1.5",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsHuggingFaceInference",
+      "typeVersion": 1,
+      "position": [
+        304,
+        496
+      ],
+      "id": "7b49a360-aa24-43c3-a971-5498ff8b7f13",
+      "name": "Embeddings HuggingFace Inference",
+      "credentials": {
+        "huggingFaceApi": {
+          "id": "eOZLLxaXtxnnMl4v",
+          "name": "Hugging Face account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "qwen/qwen3.6-27b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        512,
+        368
+      ],
+      "id": "96c7a2e4-1161-4a10-be5f-b16c047291ad",
+      "name": "Groq Chat Model1",
+      "credentials": {
+        "groqApi": {
+          "id": "iEnTXGmYuT8UQXJE",
+          "name": "Groq account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Answer questions with a vector store": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "Answer questions with a vector store",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings HuggingFace Inference": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Answer questions with a vector store",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "1445cb03-190a-4160-a740-8b735b12ae71",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "510b4c21722069f9dc81d3f9d3f2f6ac1f5918fac0181a1c80b87f6a820d0cf9"
+  },
+  "nodeGroups": [],
+  "id": "c8cWEkZ47987VKrR",
+  "tags": []
+}
