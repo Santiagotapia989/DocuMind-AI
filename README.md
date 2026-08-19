@@ -2,6 +2,10 @@
 ## 🚀 Demo en Vivo
 Podés probar el agente conversacional en tiempo real desde el siguiente enlace:
 👉 **[Probar Chatbot RAG en Vivo](https://santiago140304.app.n8n.cloud/webhook/0f4429b7-3b4d-46fc-8916-7975315461b4/chat)**
+> **Sugerencias de preguntas para probar:**
+> * *¿Qué tecnologías backend maneja Santiago?*
+> * *¿En qué proyectos destacados ha trabajado?*
+> * *¿Cuál es su formación académica y qué rol tuvo en la Hackathon UCA?*
 
 Este proyecto implementa una arquitectura **RAG (Retrieval-Augmented Generation)** automatizada de dos flujos utilizando **n8n**, **Pinecone** (Base de Datos Vectorial) y **Groq** (LLM). Permite la ingesta automática de documentos PDF y la consulta interactiva en tiempo real mediante un agente conversacional inteligente.
 
