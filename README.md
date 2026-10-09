@@ -1,7 +1,7 @@
 # DocuMind AI — Chatbot RAG
 ## 🚀 Demo en Vivo
 Podés probar el agente conversacional en tiempo real desde el siguiente enlace:
-👉 **[Probar Chatbot RAG en Vivo](https://documind-stb.netlify.app)**
+👉 **[Probar demo en vivo](https://docmindaia.netlify.app/)**
 > **Sugerencias de preguntas para probar:**
 > * *¿Qué tecnologías backend maneja Santiago?*
 > * *¿En qué proyectos destacados ha trabajado?*
@@ -62,7 +62,7 @@ node dev-server.js   # → http://localhost:8888
 
 **Deploy en Netlify:**
 1. Netlify → *Add new site → Import from Git* → elegir este repo. `netlify.toml` ya configura `publish` y `functions`.
-2. Asignar el nombre de sitio `documind-stb` (o actualizar el link del demo).
+2. Asignar el nombre de sitio `docmindaia` (o actualizar el link del demo).
 3. *(Opcional, recomendado)* Site settings → Environment variables → `GROQ_API_KEY` (key gratuita en console.groq.com) para respuestas más rápidas.
 
 ---
