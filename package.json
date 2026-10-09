@@ -1,0 +1,10 @@
+{
+  "name": "documind-ai",
+  "version": "1.0.0",
+  "description": "DocuMind AI — chatbot RAG standalone (sin n8n), deployable en Netlify",
+  "type": "module",
+  "scripts": {
+    "dev": "node dev-server.js",
+    "start": "node dev-server.js"
+  }
+}

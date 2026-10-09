@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DocuMind AI — Chat sobre Santiago</title>
+  <style>
+    :root {
+      --bg: #0b0f19; --panel: #111827; --border: #1f2937;
+      --accent: #6366f1; --accent2: #8b5cf6;
+      --text: #e5e7eb; --muted: #9ca3af;
+    }
+    * { box-sizing: border-box; margin: 0; }
+    body {
+      font-family: ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(1200px 600px at 80% -10%, rgba(99,102,241,.18), transparent),
+                  radial-gradient(900px 500px at -10% 110%, rgba(139,92,246,.12), transparent), var(--bg);
+      color: var(--text); min-height: 100dvh; display: flex; justify-content: center;
+    }
+    .app { width: min(760px, 100%); display: flex; flex-direction: column; height: 100dvh; padding: 0 16px; }
+    header { padding: 22px 4px 14px; display: flex; align-items: center; gap: 12px; }
+    .logo {
+      width: 42px; height: 42px; border-radius: 12px; flex: none;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: grid; place-items: center; font-weight: 800; font-size: 18px; color: #fff;
+    }
+    h1 { font-size: 19px; }
+    header p { color: var(--muted); font-size: 13px; margin-top: 2px; }
+    .status { margin-left: auto; font-size: 11px; color: var(--muted); border: 1px solid var(--border); padding: 4px 10px; border-radius: 999px; }
+    .status::before { content: "●"; color: #34d399; margin-right: 6px; }
+
+    #chat { flex: 1; overflow-y: auto; padding: 8px 4px 12px; display: flex; flex-direction: column; gap: 12px; }
+    .msg { max-width: 82%; padding: 12px 15px; border-radius: 16px; line-height: 1.55; font-size: 15px; white-space: pre-wrap; }
+    .msg.user { align-self: flex-end; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; border-bottom-right-radius: 4px; }
+    .msg.bot { align-self: flex-start; background: var(--panel); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+    .msg.typing { color: var(--muted); font-style: italic; }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 4px 4px 12px; }
+    .chip {
+      background: transparent; color: var(--text); border: 1px solid var(--border);
+      border-radius: 999px; padding: 7px 13px; font-size: 13px; cursor: pointer; transition: .15s;
+    }
+    .chip:hover { border-color: var(--accent); background: rgba(99,102,241,.12); }
+
+    form { display: flex; gap: 10px; padding: 0 4px 20px; }
+    input {
+      flex: 1; background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+      padding: 13px 16px; color: var(--text); font-size: 15px; outline: none;
+    }
+    input:focus { border-color: var(--accent); }
+    button.send {
+      background: linear-gradient(135deg, var(--accent), var(--accent2)); border: 0; color: #fff;
+      border-radius: 14px; padding: 0 20px; font-size: 15px; font-weight: 600; cursor: pointer;
+    }
+    button.send:disabled { opacity: .5; cursor: default; }
+    footer { text-align: center; color: var(--muted); font-size: 11px; padding-bottom: 14px; }
+    footer a { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="logo">D</div>
+      <div>
+        <h1>DocuMind AI</h1>
+        <p>Preguntame sobre Santiago Tapia Bazán</p>
+      </div>
+      <span class="status">en línea</span>
+    </header>
+
+    <div id="chat"></div>
+
+    <div class="chips" id="chips"></div>
+
+    <form id="form">
+      <input id="input" placeholder="Escribí tu pregunta…" autocomplete="off" />
+      <button class="send" id="send" type="submit">Enviar</button>
+    </form>
+
+    <footer>
+      DocuMind AI · RAG reimplementado sin n8n ·
+      <a href="https://github.com/Santiagotapia989/DocuMind-AI" target="_blank" rel="noopener">código en GitHub</a>
+    </footer>
+  </div>
+
+  <script type="module">
+    import { buildMessages, fallbackAnswer, askPollinations } from "./retrieval.js";
+
+    const chat = document.getElementById("chat");
+    const form = document.getElementById("form");
+    const input = document.getElementById("input");
+    const sendBtn = document.getElementById("send");
+    const history = [];
+
+    const SUGGESTED = [
+      "¿Quién es Santiago?",
+      "¿Qué tecnologías backend maneja?",
+      "¿En qué proyectos destacados trabajó?",
+      "¿Cuál es su formación académica?",
+      "¿Qué rol tuvo en la Hackathon UCA?",
+      "¿Cómo puedo contactarlo?",
+    ];
+
+    const addMsg = (text, cls) => {
+      const div = document.createElement("div");
+      div.className = `msg ${cls}`;
+      div.textContent = text;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+      return div;
+    };
+
+    addMsg(
+      "¡Hola! Soy DocuMind, el asistente de Santiago. Podés preguntarme sobre su experiencia, proyectos, tecnologías o formación.",
+      "bot"
+    );
+
+    SUGGESTED.forEach((q) => {
+      const b = document.createElement("button");
+      b.className = "chip";
+      b.type = "button";
+      b.textContent = q;
+      b.onclick = () => { input.value = q; form.requestSubmit(); };
+      document.getElementById("chips").appendChild(b);
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const message = input.value.trim();
+      if (!message) return;
+      input.value = "";
+      sendBtn.disabled = true;
+      addMsg(message, "user");
+      history.push({ role: "user", content: message });
+      const typing = addMsg("DocuMind está escribiendo…", "bot typing");
+
+      try {
+        const reply = await ask(message);
+        typing.classList.remove("typing");
+        typing.textContent = reply;
+        history.push({ role: "assistant", content: reply });
+      } catch {
+        typing.textContent = "Hubo un problema de conexión. Probá de nuevo en unos segundos.";
+      } finally {
+        sendBtn.disabled = false;
+        input.focus();
+      }
+    });
+
+    // Si la función tiene un LLM configurado (GROQ_API_KEY / LLM_API_BASE),
+    // el browser la usa. Si no, hace retrieval + Pollinations directo,
+    // evitando el tope de 10s de las funciones de Netlify.
+    let useFunction = false;
+    fetch("/.netlify/functions/chat", { signal: AbortSignal.timeout(3000) })
+      .then((r) => r.json())
+      .then((d) => { useFunction = Boolean(d.configured); })
+      .catch(() => {});
+
+    async function ask(message) {
+      const past = history.slice(0, -1);
+      if (useFunction) {
+        try {
+          const r = await fetch("/.netlify/functions/chat", {
+            method: "POST",
+            signal: AbortSignal.timeout(15000),
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message, history: past }),
+          });
+          const data = await r.json();
+          if (data.reply) return data.reply;
+        } catch { /* cae al modo local */ }
+      }
+      const { chunks, messages } = buildMessages(message, past);
+      try {
+        return await askPollinations(messages);
+      } catch {
+        return fallbackAnswer(chunks);
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,19 +1,35 @@
-# Sistema RAG (Retrieval-Augmented Generation) con n8n, Pinecone y Groq
+# DocuMind AI — Chatbot RAG (Netlify + versión n8n original)
 ## 🚀 Demo en Vivo
 Podés probar el agente conversacional en tiempo real desde el siguiente enlace:
-👉 **[Probar Chatbot RAG en Vivo](https://santiago140304.app.n8n.cloud/webhook/0f4429b7-3b4d-46fc-8916-7975315461b4/chat)**
+👉 **[Probar Chatbot RAG en Vivo](https://documind-stb.netlify.app)**
 > **Sugerencias de preguntas para probar:**
 > * *¿Qué tecnologías backend maneja Santiago?*
 > * *¿En qué proyectos destacados ha trabajado?*
 > * *¿Cuál es su formación académica y qué rol tuvo en la Hackathon UCA?*
 
-Este proyecto implementa una arquitectura **RAG (Retrieval-Augmented Generation)** automatizada de dos flujos utilizando **n8n**, **Pinecone** (Base de Datos Vectorial) y **Groq** (LLM). Permite la ingesta automática de documentos PDF y la consulta interactiva en tiempo real mediante un agente conversacional inteligente.
+Chatbot conversacional que responde preguntas sobre el perfil, experiencia y proyectos de Santiago Tapia Bazán.
+
+**Versión actual (standalone):** app web desplegable en **Netlify** — página de chat estática + función serverless. La recuperación se hace con un buscador de relevancia propio sobre la base de conocimiento (`knowledge.js`), y la generación con un LLM vía API (Groq si hay key configurada; si no, un proveedor gratuito sin key). No depende de n8n ni de servicios externos con credenciales.
+
+**Versión original (n8n):** el proyecto nació como un sistema **RAG** orquestado con dos flujos en n8n (ingesta de PDFs desde Google Drive, embeddings de Hugging Face indexados en Pinecone y agente conversacional con Groq). Los JSON de ambos workflows se conservan en este repo como referencia.
 
 ---
 
-## 🛠️ Arquitectura del Proyecto
+## 🛠️ Arquitectura actual
 
-El sistema está dividido en dos flujos independientes y complementarios:
+```
+[ Usuario / Web Chat ] ──► [ retrieval.js: buscador de relevancia ]
+                                      │  top chunks de knowledge.js
+                                      ▼
+                    [ LLM (Groq / Pollinations) ] ──► [ Respuesta ]
+```
+
+* **`index.html`:** interfaz de chat con preguntas sugeridas y memoria de conversación.
+* **`knowledge.js`:** base de conocimiento curada (perfil, educación, skills, proyectos, contacto).
+* **`retrieval.js`:** ranking por relevancia de tokens (ES/EN, stemming, sinónimos) compartido entre browser y función.
+* **`netlify/functions/chat.js`:** función serverless. Si existen `GROQ_API_KEY` o `LLM_API_BASE`/`LLM_API_KEY`, genera server-side (la key nunca se expone al browser). Sin keys, el browser llama directo al LLM gratuito y la función sirve de fallback con respuesta armada desde los chunks.
+
+### Arquitectura original (n8n)
 
 ```
 [ PDF en Google Drive ] ──► (Workflow 1: Ingesta) ──► [ Embeddings ] ──► [ Pinecone Vector DB ]
@@ -22,27 +38,13 @@ El sistema está dividido en dos flujos independientes y complementarios:
 [ Usuario / Web Chat ] ──► (Workflow 2: Chatbot)  ──► [ Groq / LLM ] ──► [ Respuesta Semántica ]
 ```
 
-### 1. Workflow 1: Ingesta e Indexación de Documentos
-* **Google Drive Trigger / Download:** Extrae el documento PDF técnico o CV.
-* **Text Splitter:** Divide el documento en fragmentos óptimos (chunks) para preservar el contexto semántico.
-* **Embeddings (Hugging Face):** Transforma el texto en vectores multidimensionales.
-* **Pinecone Vector Store:** Almacena e indexa los vectores para búsquedas de alta velocidad.
-
-### 2. Workflow 2: Agente Conversacional (RAG)
-* **Chat Trigger / Web Interface:** Interfaz pública de usuario final.
-* **AI Agent & Memory:** Agente con ventana de contexto conversacional para mantener el hilo de la charla.
-* **Vector Store Tool:** Herramienta conectada a Pinecone que realiza búsqueda de similitud coseno sobre los embeddings.
-* **LLM (Groq - Qwen / LLaMA 3):** Genera respuestas precisas, en español y basadas estrictamente en la información recuperada de Pinecone.
-
 ---
 
 ## 🚀 Tecnologías Utilizadas
 
-* **n8n:** Orquestador y motor de automatizaciones (Workflows).
-* **Pinecone:** Vector Database para almacenamiento e indexación de embeddings.
-* **Hugging Face Inference API:** Generación de modelos de embeddings.
-* **Groq API (Qwen 2.5 / LLaMA 3):** Inferencia ultra-rápida para el LLM.
-* **Google Drive API:** Repositorio de origen para los documentos.
+**Versión actual:** HTML/CSS/JS vanilla · Netlify (hosting + Functions) · Groq API u otro LLM OpenAI-compatible (opcional, vía env vars) · Pollinations (LLM gratuito sin key, modo fallback).
+
+**Versión original (workflows JSON):** n8n · Pinecone · Hugging Face Inference API · Groq API · Google Drive API.
 
 ---
 
@@ -50,28 +52,38 @@ El sistema está dividido en dos flujos independientes y complementarios:
 
 ```text
 .
-├── workflow-1-ingesta.json    # Flujo de carga de PDF e indexación a Pinecone
-├── workflow-2-chatbot.json    # Flujo del agente de IA RAG
-└── README.md                  # Documentación del proyecto
+├── index.html                  # Interfaz de chat
+├── knowledge.js                # Base de conocimiento (perfil, proyectos, contacto)
+├── retrieval.js                # Buscador de relevancia + prompt + fallback
+├── dev-server.js               # Servidor local sin dependencias
+├── netlify.toml                # Config de deploy en Netlify
+├── netlify/functions/chat.js   # Función serverless del chatbot
+├── package.json
+├── workflow-1-ingesta.json     # [n8n original] Flujo de ingesta PDF → Pinecone
+├── workflow-2-chatbot..json    # [n8n original] Flujo del agente RAG
+└── README.md                   # Documentación del proyecto
 ```
 
 ---
 
-## ⚙️ Instrucciones de Instalación e Importación
+## ⚙️ Correr local y desplegar
 
-1. Clonar el repositorio:
-   ```bash
-   git clone https://github.com/TU_USUARIO/rag-automation-n8n-pinecone.git
-   ```
-2. En tu instancia de **n8n**:
-   * Hacé clic en **`Create workflow`**.
-   * En el menú superior derecho, seleccioná **`Import from file`**.
-   * Importá `workflow-1-ingesta.json` y `workflow-2-chatbot.json`.
-3. Configurar Credenciales:
-   * **Pinecone API Key**: Configurar índice y entorno.
-   * **Hugging Face Access Token**: Para la generación de embeddings.
-   * **Groq API Key**: Para el modelo de lenguaje del Chatbot.
-4. Activar los flujos y desplegar el chat mediante la URL pública generada por n8n.
+**Local (sin dependencias):**
+```bash
+git clone https://github.com/Santiagotapia989/DocuMind-AI.git
+cd DocuMind-AI
+node dev-server.js   # → http://localhost:8888
+```
+
+**Deploy en Netlify:**
+1. Netlify → *Add new site → Import from Git* → elegir este repo. `netlify.toml` ya configura `publish` y `functions`.
+2. Asignar el nombre de sitio `documind-stb` (o actualizar el link del demo).
+3. *(Opcional, recomendado)* Site settings → Environment variables → `GROQ_API_KEY` (key gratuita en console.groq.com) para respuestas más rápidas.
+
+**Importar la versión n8n original (opcional):**
+1. En tu instancia de **n8n**: `Create workflow` → `Import from file` → importar `workflow-1-ingesta.json` y `workflow-2-chatbot..json`.
+2. Configurar credenciales: Pinecone API Key, Hugging Face Access Token y Groq API Key.
+3. Activar el workflow del chat y usar la URL pública generada por n8n.
 
 ---
 
